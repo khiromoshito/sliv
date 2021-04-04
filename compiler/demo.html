@@ -1,0 +1,127 @@
+
+<script src="init.js"></script>
+<script src="lexer1.js"></script>
+<script src="lexer2.js"></script>
+<script src="evaluator.js"></script>
+
+
+
+<script>
+
+    var log1;
+
+    window.onload = function() {
+        log1 = document.querySelector(".log1");
+    }
+
+    // Warm up
+    startExecution(lex2(lex1("[WarmUp<WarmUp>] warmup: (warmup) {warmup+(\"UP\")}\nwarmup('WARM')")));
+
+    function runCode() {
+        var code = document.querySelector(".editor").value;
+
+
+
+        let lexed1 = lex1(code);
+        let lexed2 = lex2(lexed1);
+
+
+        console.time("PROCESS TIME");
+        startExecution(lexed2);
+        console.timeEnd("PROCESS TIME");
+
+        console.log(lexed2);
+    }
+
+    function clearTerminal() {
+        log1.value = "";
+    }
+
+    function log(message) {
+        log1.value += message + "\n";
+    }
+</script>
+
+<style>
+    body {
+        padding: 15;
+        margin: 0;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .pane-left {
+        float: left;
+        width: 60%;
+        padding-right: 5px;
+    }
+
+    .pane-right {
+        float: left;
+        width: 40%;
+        padding-left: 5px;
+    }
+
+    .editor, .log1 {
+        resize: none;
+        width: 100%;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        outline:  none;
+
+        padding: 10px;
+        font-size: 15px;
+
+        font-family:'Courier New', Courier, monospace;
+    }
+
+    .editor {
+        height: 100%;
+    }
+
+    .log1 {
+        height: 70%;
+        line-height: 1.3;
+    }
+
+    .sleeve-button {
+        padding: 10px 20px;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        outline: none;
+    }
+
+    .sleeve-button-green {
+        background-color: #38ba47;
+    }
+
+    .sleeve-button-gray {
+        background-color: #505050;
+    }
+</style>
+<div class="pane-left">
+    <textarea class="editor">
+name: "Kazuki"
+myAge: 17
+
+ageChecker: (age) {
+    #return age >= 18
+}
+
+isMature: ageChecker(myAge)
+
+#if isMature:: print(name + " is mature") #else:: print(name + " is not yet mature")</textarea><br>
+    
+</div>
+<div class="pane-right">
+    <textarea class="log1" readonly></textarea>
+    <button class="sleeve-button sleeve-button-green" onclick="runCode()">RUN</button> 
+    <button class="sleeve-button sleeve-button-gray" onclick="clearTerminal()">CLEAR</button>
+</div>

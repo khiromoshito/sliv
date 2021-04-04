@@ -1,5 +1,5 @@
 
-// Native methods can only accept primitive values
+
 let native_methods = {
     print: function(args) {
         let primitives = args.map(arg=>extractCrumb(arg));

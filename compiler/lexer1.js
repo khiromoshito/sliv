@@ -157,13 +157,13 @@ var symbolAnticipates = (symbol) => " + - * / % : :: >> = | & ! < > . >= <= != &
 
 function lex1(source) {
 
-    // First, a spaces is added at the end of the source
+    // First, a space is added at the end of the source
     // to catch any open symbols
     source += " ";
     
     /**
      * The stack corresponding to the current position on the tree
-     * First item is the root, and last item is the current parent
+     * First item is the root, and last item is the current group.
      * Each item contain a group-type subcomponent which holds
      * an array of subcomponent items
      * 

@@ -123,7 +123,6 @@ function processSetter(subcontext, equator_index) {
     // a two-sided LogicContext
     for(let li = 0; li<subcomponents.length; li++) {
         if(isLogicGate(subcomponents[li])) {
-            console.log("LOGIC GATE", subcomponents[li]);
             
             let left = subcomponents.slice(0, li);
             let right = subcomponents.slice(li+1);
@@ -424,12 +423,11 @@ function processSetter(subcontext, equator_index) {
                     }
                     
                     
-                    else {
-                        console.log(subcomponents);
+                    else 
                         throw(`CompileException: Unexpected statement at `+
                             `line ${subcomponent[2][0].line} `+
                             `column ${subcomponent[2][0].column}`);
-                    }
+                    
     
                     
                 }
@@ -712,19 +710,17 @@ function processAttributes(attributes) {
                     `line ${attr[2][0].line} `+
                     `column ${attr[2][0].column}`);
 
-            } else {
-                console.log(attr);
+            } else 
                 throw(`CompileException: Unexpected statement on left side of setter at `+
                 `line ${attr[2][0].line} `+
                 `column ${attr[2][0].column}`);
-            }
+            
 
-        } else {
-            console.log(attr);
+        } else 
             throw(`CompileException: Unexpected statement on left side of setter at `+
             `line ${attr[2][0].line} `+
             `column ${attr[2][0].column}`);
-        }
+        
             
     }
 

@@ -507,18 +507,19 @@ function startExecution(root) {
 
     let evaluateLogic = function(logiccontext = new LogicContext(), address = "root") {
         
-        let left_value = extractCrumb(evaluateValue(logiccontext.left));
-        let right_value = extractCrumb(evaluateValue(logiccontext.right));
+        let left_value = extractCrumb(evaluateValue(logiccontext.left, address));
+        let right_value = extractCrumb(evaluateValue(logiccontext.right, address));
 
         let logic_value = false;
 
         let areBooleans = function(...values) {
-            for(let value of values) if(value!==true || value!==false) return false;
+            for(let value of values) if(typeof(value)!=="boolean") return false;
             return true;
         };
 
         if(!areBooleans(left_value, right_value)) 
-            throwException(`LogicException: Only booleans can be passed in && and || conditions`, logiccontext.start);
+            throwException(`LogicException: Only booleans can be passed in && and || conditions, but found:`+
+            `\n   ${left_value}\n   ${right_value}`, logiccontext.start);
 
         switch(logiccontext.logic_type) {
             case LogicType.AND:

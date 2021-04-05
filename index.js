@@ -3,6 +3,7 @@
 
 const yargs = require("yargs");
 const fs = require("fs");
+const colors = require("colors");
 
 let f1 = fs.readFileSync('./compiler/init.js')+"";
 let f2 = fs.readFileSync('./compiler/lexer1.js')+"";
@@ -19,7 +20,7 @@ const options = yargs.option("r", {
 }).argv;
 
 let path = options.path;
-console.log(`Executing sliv file from path '${path}...'`);
+console.log(`Executing sliv file from path '${path}'...`);
 console.log(`---------------------------------`);
 console.log(`\n\n`);
 
@@ -29,7 +30,7 @@ fs.readFile(path, 'utf-8', function(err, source){
     } else {
 
         console.time("\n\nPROCESS TIME");
-        startExecution(lex2(lex1(source)));
+        interpret(source, path);
         console.timeEnd("\n\nPROCESS TIME");
 
     }

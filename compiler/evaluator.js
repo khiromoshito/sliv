@@ -127,9 +127,8 @@ function startExecution(root) {
             // First, either side must only be a primitive value
             if(!left.isPrimitive || !left.isPrimitive) 
                 
-                throw(`RuntimeException: Only primitive types (String, Number, Boolean, null) `+
-                    `can be used with operations, `+
-                    `at line ${operation.start.line} column ${operation.start.column}`);
+                throwException(`RuntimeException: Only primitive types (String, Number, Boolean, null) `+
+                    `can be used with operations`, operation.start);
 
             let left_digestible = extractCrumb(left);
             let right_digestible = extractCrumb(right);
@@ -141,40 +140,34 @@ function startExecution(root) {
                 case OperationType.SUBTRACT:
                     if(typeof(left_digestible)=="number" && typeof(right_digestible)=="number") {
                         currentCrumb = new Crumb([], left_digestible - right_digestible, address);
-                    } else throw(`RuntimeException: Only numbers can be subtracted, `+
-                    `at line ${operation.start.line} column ${operation.start.column}`);
+                    } else throwException(`RuntimeException: Only numbers can be subtracted`, operation.start);
                 break;
                 case OperationType.MULTIPLY:
                     // First, both cannot be strings
                     if(isboth(left_digestible, right_digestible, "string")) 
-                        throw(`RuntimeException: Strings cannot be multiplied to each other, `+
-                            `at line ${operation.start.line} column ${operation.start.column}`);
+                        throwException(`RuntimeException: Strings cannot be multiplied to each other`, operation.start);
 
                     // Then, they should only be either numbers or string
                     if(!isonly(left_digestible, right_digestible, ["string", "number"]))
-                        throw(`RuntimeException: Only [String,Number] and [Number,Number] can be multiplied, `+
-                            `at line ${operation.start.line} column ${operation.start.column}`);
+                        throwException(`RuntimeException: Only [String,Number] and [Number,Number] can be multiplied`, operation.start);
 
                     if(isboth(left_digestible, right_digestible, "number")) {
                         currentCrumb = new Crumb([], left_digestible * right_digestible, address);
                     } else {
                         let segregated = segregate(left_digestible, right_digestible, ["string", "number"]);
-                        if(segregated[1]<0) throw(`RuntimeException: Only non-negative values are allowed to multiply strings, `+
-                            `at line ${operation.start.line} column ${operation.start.column}`);
+                        if(segregated[1]<0) throwException(`RuntimeException: Only non-negative values are allowed to multiply strings`, operation.start);
                         currentCrumb = new Crumb([], segregated[0].repeat(Math.floor(segregated[1])), address);
                     }
                 break;
                 case OperationType.DIVIDE:
                     if(typeof(left_digestible)=="number" && typeof(right_digestible)=="number") {
                         currentCrumb = new Crumb([], left_digestible / right_digestible, address);
-                    } else throw(`RuntimeException: Only numbers can be divided, `+
-                    `at line ${operation.start.line} column ${operation.start.column}`);
+                    } else throwException(`RuntimeException: Only numbers can be divided`, operation.start);
                 break;
                 case OperationType.MODULO:
                     if(typeof(left_digestible)=="number" && typeof(right_digestible)=="number") {
                         currentCrumb = new Crumb([], left_digestible % right_digestible, address);
-                    } else throw(`RuntimeException: Only numbers can be applied with modulo, `+
-                    `at line ${operation.start.line} column ${operation.start.column}`);
+                    } else throwException(`RuntimeException: Only numbers can be applied with modulo`, operation.start);
                 break;
                 
             }
@@ -249,8 +242,7 @@ function startExecution(root) {
         }
         
 
-        throw(`NameException: Variable '${variable_name}' not found at `+
-            `line ${position.line} column ${position.column}`);
+        throwException(`NameException: Variable '${variable_name}' not found`, position);
     };
 
     let executeSetter = function(settercontext = new SetterContext(), address = "root") {
@@ -316,11 +308,15 @@ function startExecution(root) {
             setVariable(param_address, evaluateValue(param.default_value, param_address));
         }
 
-        optional_named_params.forEach((param_name, param)=>{
+
+        let param_names = Object.keys(optional_named_params);
+        for(let i=0; i<param_names.length; i++) {
+            let param_name = param_names[i];
+            let param = optional_named_params[param_name];
+
             let param_address = getAddress(address, param_name);
             setVariable(param_address, evaluateValue(param.default_value, param_address));
-        });
-
+        }
 
 
         let bland_done = 0;
@@ -353,9 +349,8 @@ function startExecution(root) {
 
                         unnamed_done++;
 
-                    } else throw(`ArgumentException: Only ${bland_params.length + unnamed_params.length} `+
-                        `unnamed/positional parameter(s) was expected, but found more in args, at ` +
-                        `line ${arg.start.line} column ${arg.start.column}`);
+                    } else throwException(`ArgumentException: Only ${bland_params.length + unnamed_params.length} `+
+                        `unnamed/positional parameter(s) was expected, but found more in args`, arg.start);
                 }
                     
             } else {
@@ -374,26 +369,23 @@ function startExecution(root) {
 
                     let param_address = getAddress(address, param.variable_name);
                     setVariable(param_address, evaluateValue(arg.value, param_address));
-                } else
-                    throw(`ArgumentException: Parameter '${arg.variable_name}' was not found, `+
-                        `at line ${arg.start.line} column ${arg.start.column}`);
+                } else 
+                    throwException(`ArgumentException: Named parameter '${arg.variable_name}' was not found (maybe you forgot to add the @named flag?)`, arg.start);
                 
             }
         }
 
         // Now, check for any unset bland parameters
         if(bland_done<bland_params.length) 
-            throw(`ArgumentException: Function call expected ${bland_params.length} `+
-                `required unnamed/positional args, but only ${bland_done} found, at` +
-                `line ${position.line} column ${position.column}`);
+            throwException(`ArgumentException: Function call expected ${bland_params.length} `+
+                `required unnamed/positional args, but only ${bland_done} found`, position);
 
         // Then, check for any unset required named parameters
         if(required_named_done<required_named_params.length()) 
-            throw(`ArgumentException: Function call expected ${required_named_params.length()} `+
-                `required named args, but only ${required_named_done} found, at` +
-                `line ${position.line} column ${position.column}`);
+            throwException(`ArgumentException: Function call expected ${required_named_params.length()} `+
+                `required named args, but only ${required_named_done} found`, position);
 
-
+    
 
     };
 
@@ -451,9 +443,8 @@ function startExecution(root) {
 
                         break;
                     } else if(condition_value!==false) 
-                        throw(`ConditionException: Only booleans can be passed as condition `+
-                            `in if-else statements as line ${commandcontext.start.line} ` +
-                            `column ${commandcontext.start.column}`);
+                        throwException(`ConditionException: Only booleans can be passed as condition `+
+                            `in if-else statements`, commandcontext.start);
 
                 }
 
@@ -527,9 +518,7 @@ function startExecution(root) {
         };
 
         if(!areBooleans(left_value, right_value)) 
-            throw(`LogicException: Only booleans can be passed in && and || conditions,  `+
-                `at line ${logiccontext.start.line} ` +
-                `column ${logiccontext.start.column}`);
+            throwException(`LogicException: Only booleans can be passed in && and || conditions`, logiccontext.start);
 
         switch(logiccontext.logic_type) {
             case LogicType.AND:

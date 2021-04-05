@@ -10,25 +10,65 @@ function lex2(root, context_type = ContextType.ROOT) {
     let lexed_root = new GroupContext(context_type);
 
 
+    let priorIfContext = undefined;
+
     for(let subcontext of root[1]) {
 
-        // First, check if setter
-        // A subcontext is setter if found a colon
-        
-        /** The index of the equator/setter symbol, colon ":" */
-        let equator_index = null;
 
-        for(let i = 0; i<subcontext[1].length; i++) 
-            if(subcontext[1][i][0].isChar(CharType.COLON))
-                equator_index = i;
+        let isLexed = false;
 
-        if(equator_index!=null) {
-            // If has colon (means settercontext)
-            lexed_root.contents.push(processSetter(subcontext, equator_index));
-        } else {
-            // Else, simply a valuecontext
-            lexed_root.contents.push(processValue(subcontext[1]));
-        }  
+        // Scan for a setter, lambda, or command
+        for(let i = 0; i<subcontext[1].length && !isLexed; i++) {
+
+            let subcomp_type = subcontext[1][i][0];
+
+            if(subcomp_type.isChar(CharType.COLON)) {
+                lexed_root.contents.push(processSetter(subcontext, i));
+                isLexed = true;
+                break;
+            } else if(subcomp_type.isOf(SubComponentType.COMMAND)) {
+                
+                switch(subcontext[1][i][1]) {
+                    case "else":
+                        if(priorIfContext!==undefined) {
+                            let else_statement = 
+                                processIfCommandItem(subcontext[1].slice(1));
+
+                            priorIfContext.else_statement = else_statement;
+
+                            priorIfContext = undefined;
+                        }
+                    break;
+                    case "elseif":
+                        if(priorIfContext!==undefined) {
+                            let elseif_statement = 
+                                processIfCommandItem(subcontext[1].slice(1));
+
+                            priorIfContext.if_statements.push(elseif_statement);
+                        }
+                    break;
+                    default:
+                        priorIfContext = undefined;
+
+                        let lexed = processValue(subcontext[1]);
+                        lexed_root.contents.push(lexed);
+
+                        if(subcontext[1][i][1]==="if") {
+                            priorIfContext = lexed;
+                        }
+
+                        isLexed = true;
+                }
+
+                
+                break;
+
+            }
+                
+        }
+
+        if(!isLexed) lexed_root.contents.push(processValue(subcontext[1]));
+
         
 
     } 
@@ -364,7 +404,7 @@ function processSetter(subcontext, equator_index) {
                         cumulative_calls.push(
                             new CallItem(
                                 CallType.FUNCTION, 
-                                processargs(subcomponent),
+                                processArgs(subcomponent),
                                 subcomponent[2][0]));
                     } else 
     
@@ -667,17 +707,24 @@ function processAttributes(attributes) {
                     cumulative_calls.push(
                         new CallItem(CallType.ENTRY, processEntryGetter(attr),attr[2][0]));
 
+
                 else throw(`CompileException: Unexpected '{' after non-variable object at `+
                     `line ${attr[2][0].line} `+
                     `column ${attr[2][0].column}`);
 
-            } else throw(`CompileException: Unexpected statement on left side of setter at `+
+            } else {
+                console.log(attr);
+                throw(`CompileException: Unexpected statement on left side of setter at `+
                 `line ${attr[2][0].line} `+
                 `column ${attr[2][0].column}`);
+            }
 
-        } else throw(`CompileException: Unexpected statement on left side of setter at `+
+        } else {
+            console.log(attr);
+            throw(`CompileException: Unexpected statement on left side of setter at `+
             `line ${attr[2][0].line} `+
             `column ${attr[2][0].column}`);
+        }
             
     }
 
@@ -855,18 +902,17 @@ function processParameters(group_subcomponent) {
                 last_bland_index = i;
             } else {
                 if(i<last_bland_index)
-                    throw(`CompileException: All unnamed/positional parameters `+
+                    throwException(`CompileException: All unnamed/positional parameters `+
                     `with default values must be placed after `+
-                    `all no-default unnamed parameters, at `+
-                    `line ${param.start.line} column ${param.start.column}`);
+                    `all no-default unnamed parameters`, param.start);
             }
 
             last_unnamed_index = i;
         } else {
             if(i<last_unnamed_index)
-                throw(`CompileException: All named parameters `+
-                    `must be placed after all unnamed parameters, at `+
-                    `line ${param.start.line} column ${param.start.column}`);
+                throwException(`CompileException: All named parameters `+
+                    `must be placed after all unnamed parameters`, 
+                    param.start);
         }
     }
 
@@ -875,7 +921,7 @@ function processParameters(group_subcomponent) {
 }
 
 
-function processargs(group_subcomponent) {
+function processArgs(group_subcomponent) {
     
     let args = [];
 
@@ -949,30 +995,23 @@ function processCommand(command_array, position = 0) {
     let command_subcomp = command_array[0];
     let command_name = command_subcomp[1];
 
+
+    if(!COMMANDS.includes(command_name)) 
+        throwException(`CompileException: Unknown command '#${flag_name}'`, flag_subcomponent[2][0]);
+
     // Commands must have at least one argument (two items for command_array)
     if(command_array.length<=1) 
-        throw(`CompileException: Missing args for command '${command_name}' at `+
-            `line ${command_subcomp[2][0].line} `+
-            `column ${command_subcomp[2][0].column}`);
+        throwException(`CompileException: Missing args for command '${command_name}'`, command_subcomp[2][0]);
 
-    
-    // Check if command exists
-    if(COMMANDS[command_name]===undefined) 
-        throw(`CompileException: Command '#${command_name}' at `+
-            `line ${command_subcomp[2][0].line} `+
-            `column ${command_subcomp[2][0].column}`);
-
-    // Check if command is at right position (isFirst or not)
-    if(COMMANDS[command_name][0] === true && position > 0)
-        throw(`CompileException: Command '#${command_name}' set at wrong position `+
-            `(this command must be set at the beginning of the statement), at `+
-            `line ${command_subcomp[2][0].line} `+
-            `column ${command_subcomp[2][0].column}`);
 
     let args = command_array.slice(1);
     
     switch(command_name) {
         case "return":
+            return new CommandContext(
+                "return", processValue(args), 
+                command_subcomp[2][0]);
+        case "ret":
             return new CommandContext(
                 "return", processValue(args), 
                 command_subcomp[2][0]);
@@ -1025,12 +1064,14 @@ function processCommand(command_array, position = 0) {
 
 
 
-    return new CommandContext(command_name, []);
+    return new CommandContext(command_name, [], command_subcomp[2][0]);
 }
 
 
 function processIfCommandItem(subcomponents) {
-    if(subcomponents==0) throw(`CompileException: Found empty args for command at ` +
+
+
+    if(subcomponents==0) throw(`CompileException: Found empty arguments for command at ` +
         `line ${subcomponent[2][0].line} `+
         `column ${subcomponent[2][0].column}`);
 
@@ -1039,13 +1080,12 @@ function processIfCommandItem(subcomponents) {
 
     for(let i=0; i<subcomponents.length; i++) {
         let subcomponent = subcomponents[i];
+        let positions = [
+            subcomponents[0][2][0],
+            subcomponents[subcomponents.length-1][2][1]
+        ];
 
         if(subcomponent[0].isOf(SymbolType.COLON2)) {
-            let positions = [
-                subcomponents[0][2][0],
-                subcomponents[subcomponents.length-1][2][1]
-            ];
-
             return new IfCommandItem(
                 processValue(subcomponents.slice(0, i)),
                 lex2([SubComponentType.SCOPE, 
@@ -1054,8 +1094,25 @@ function processIfCommandItem(subcomponents) {
                 true,
                 positions[0]
             );
+        } else if(subcomponent[0].isOf(SubComponentType.GROUP_CURLY)) {
+            return new IfCommandItem(
+                processValue(subcomponents.slice(0, i)),
+                lex2(subcomponent, ContextType.SCOPE),
+                true,
+                positions[0]
+            );
+        } else if(subcomponent[0].isChar(CharType.COLON)) {
+            return new IfCommandItem(
+                processValue(subcomponents.slice(0, i)),
+                processValue(subcomponents.slice(i+1)),
+                false,
+                positions[0]
+            );
         }
     }
+
+    throwException(`CompileException: Missing action '{ }' or '::' or ':' `+
+        `for 'else-if' statement`, subcomponents[subcomponents.length-1][2][1]);
 }
 
 function processFlag(flag_subcomponent) {

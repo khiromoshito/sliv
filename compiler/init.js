@@ -164,17 +164,11 @@ var FLAGS = {
  * Command item:
  * [isFirst:boolean, action:function]
  */
-var COMMANDS = {
-    "return": [true, function(...args) {}],
-    "if": [false, function(args) { }],
-    "else": [false, function(args) { }],
-    "elseif": [false, function(args) { }],
-    "while": [false, function(args) { }],
-    "for": [true, function(args) { }],
-    "switch": [true, function(args) { }],
-    "repeat": [true, function(args) { }],
-    "generate": [true, function(args) { }],
-};
+var COMMANDS = [
+    "return", "ret", "if", "else", "elseif", "while", "for", "switch", "repeat", "generate"
+];
+
+
 
 
 class Context {
@@ -516,6 +510,26 @@ String.prototype.isOf = function(parent) {
     return this.startsWith(parent);
 };
 
+var throwException = function(_, __) {};
+
+function interpret(source, path) {
+    throwException = function(message, position) {
+
+        let refpath = path + ":" + position.line + ":" + position.column;
+        let errormsg = `\n--------------------------------------\n\n`+
+            `${message} \n\nat './${refpath}'\n\n`+
+            `--------------------------------------\n\n`;
+
+        console.log(errormsg.red);
+        
+        // let error = new Error();
+        // error.stack = "";
+
+        throw "";
+    };
+    startExecution(lex2(lex1(source)));
+}
+
 // exports = {
 //     SubComponentType,
 //     SymbolType,
@@ -558,3 +572,4 @@ String.prototype.isOf = function(parent) {
 //     CallItem,
 //     ExceptionType
 // };
+

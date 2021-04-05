@@ -1,14 +1,29 @@
 
 
-fibonacci: (num) {
-    #if num <= 2:: 
-        #return 1
-    
-    #return fibonacci(num-2) + fibonacci(num-1)
+
+func: (name, @named age) {
+    message: "Bleh, too old"
+
+    #if age <= 10::
+        message: "Hmm, are you sure that's " + name + "'s age?"
+
+    #elseif age <= 14::
+        message: "Too young!"
+
+    #elseif age <= 17::
+        message: name + "'s age is " + age
+
+
+    #return message
 }
 
-print(fibonacci(10))
 
+
+func2: (name, @named age) {
+    #return (#if age<=10: "Too young" #else: "Just right")
+}
+
+print(func("Hanne", age: 12))
 
 
 

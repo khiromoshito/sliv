@@ -136,7 +136,7 @@ var getSCType = (charType) => {
     let sctype = correspondents[charType];
 
     if(sctype) return sctype; else 
-        throw(`PrecompilerException: CharType '${charType}' does not have a corresponding SubcomponentType`);
+        throw new Error(`FatalException: CharType '${charType}' does not have a corresponding SubcomponentType`);
 
 }
 
@@ -151,9 +151,6 @@ var symbolAnticipates = (symbol) => " + - * / % : :: >> = | & ! < > . >= <= != &
     Parts of a subcomponent:
     [type, content]
 */
-
-
-
 
 function lex1(source) {
 
@@ -233,7 +230,7 @@ function lex1(source) {
             // If trying to close a non-existent subcontext
             // because of a separator (in this case, comma ",")
             if(separator != null) 
-                throw(ExceptionType.UNEXPECTED,
+                prethrowException(ExceptionType.UNEXPECTED,
                     `Unexpected separator '${separator}'`);
         }
     }
@@ -264,7 +261,7 @@ function lex1(source) {
                 parentgroup[1].push(poppedgroup);
 
         } else
-            throwException(ExceptionType.UNEXPECTED, "Unexpected group closing");
+            prethrowException(ExceptionType.UNEXPECTED, "Unexpected group closing");
     }
 
     /**
@@ -292,8 +289,10 @@ function lex1(source) {
 
 
     /** Function to call for exceptions */ 
-    let throwException = (type, message) => {
-        throw(`CompileException: ${message} at line ${position.line} column ${position.column}`);
+    let prethrowException = (type, message) => {
+        let compilemessage = `CompileException: ${message}`;
+
+        throwException(compilemessage, position);
     };
 
 
@@ -369,7 +368,7 @@ function lex1(source) {
 
                 //console.log(end);
                 
-                if(endtype.isOf(SymbolType.COMMENT_BLOCK) && isClosing(end)) {
+                if(endtype!==undefined && endtype.isOf(SymbolType.COMMENT_BLOCK) && isClosing(end)) {
                     // Remove the last char from the subcomponent (probably asterisk *)
                     cursubcomp[1] = cursubcomp[1].slice(0,-1);
 
@@ -428,7 +427,7 @@ function lex1(source) {
                     cursubcomp = temp_type_stack[0];
                     pushCurrent();
                 } else 
-                    throwException(ExceptionType.GROUP_UNMATCHED, 
+                    prethrowException(ExceptionType.GROUP_UNMATCHED, 
                         `Type was closed but open subtype(s) still found unclosed`);
             } else 
             
@@ -481,7 +480,7 @@ function lex1(source) {
                         temp_type_closeSubcontext();
                         temp_type_pushGroup();
                     } else
-                        throwException(ExceptionType.UNEXPECTED,
+                        prethrowException(ExceptionType.UNEXPECTED,
                             `Unexpected '>'`);
                 } else
                 
@@ -496,13 +495,13 @@ function lex1(source) {
                             [{...position}, {...position}]]);
 
                     } else 
-                        throwException(ExceptionType.UNEXPECTED,
+                        prethrowException(ExceptionType.UNEXPECTED,
                             `Unexpected '|' at beginning without prior type value`);
                 } else 
 
                 // If another character (excluding space)
                 if(!charType.isOf(CharType.SPACE))
-                    throwException(ExceptionType.UNEXPECTED,
+                    prethrowException(ExceptionType.UNEXPECTED,
                         `Unexpected character '${char}' inside type`);
                 
             }
@@ -524,7 +523,7 @@ function lex1(source) {
 
                 // If command/flag is empty, throw Exception
                 if(cursubcomp[1].length==0)
-                    throwException(ExceptionType.UNEXPECTED,
+                    prethrowException(ExceptionType.UNEXPECTED,
                         `Unexpected '${char}'`);
 
                 // Push current command/flag subcomponent
@@ -545,7 +544,7 @@ function lex1(source) {
             if(charType.isOf(CharType.COMMA)) {
                 
                 // If yes, throw exception
-                throwException(ExceptionType.UNEXPECTED,
+                prethrowException(ExceptionType.UNEXPECTED,
                     `Unexpected ',' after symbol '${cursubcomp[1]}'`);
                 
             }
@@ -598,7 +597,7 @@ function lex1(source) {
                     } else {
 
                         // Else if for closing, throw exception
-                        throwException(ExceptionType.UNEXPECTED,
+                        prethrowException(ExceptionType.UNEXPECTED,
                             `Unexpected '${cursubcomp[1]}'`);
 
                     }
@@ -666,7 +665,7 @@ function lex1(source) {
                     temp_type_cursubcomp = [SubComponentType.OPEN, ""];
 
 
-                } else throwException(ExceptionType.GROUP_UNMATCHED, 
+                } else prethrowException(ExceptionType.GROUP_UNMATCHED, 
                     "Unexpected closing ']'");
             } else
 
@@ -703,12 +702,12 @@ function lex1(source) {
                         if(getCurrent()[0].isOf(getSCType(charType))) {
                             pushGroup();
                         } else {
-                            throwException(ExceptionType.GROUP_UNMATCHED,
+                            prethrowException(ExceptionType.GROUP_UNMATCHED,
                             "The opening for current group does not match the closing");
                         }
 
                     } else {
-                        throwException(ExceptionType.ANTICIPATION_UNCLOSED,
+                        prethrowException(ExceptionType.ANTICIPATION_UNCLOSED,
                         "Group unexpectedly closed without completing anticipating statement");
                     }
                 }
@@ -779,7 +778,7 @@ function lex1(source) {
                 } else {
 
                     // If does, throw error
-                    throwException(ExceptionType.ANTICIPATION_UNCLOSED,
+                    prethrowException(ExceptionType.ANTICIPATION_UNCLOSED,
                         `Unexpected ',' after anticipating symbol`);
 
                 }
@@ -832,7 +831,10 @@ function lex1(source) {
     // ITERATOR
 
     /** Array for each lines */
-    let lines = source.split("\n");
+    let lines1 = source.split("\n");
+    let lines = [];
+
+    lines1.forEach(line1=>lines.push(...line1.split("\r")));
     
 
     // Through the lines
@@ -843,7 +845,7 @@ function lex1(source) {
         for(let c = 0; c<line.length; c++) {
 
             // Update position
-            position = { line: l, column: c };
+            position = { line: l+1, column: c+2 };
             
             processChar(line[c]);
         }
@@ -875,13 +877,13 @@ function lex1(source) {
 
     // Checks for any unclosed anticipating statements
     if(isAnticipating)
-        throwException(ExceptionType.ANTICIPATION_UNCLOSED,
+        prethrowException(ExceptionType.ANTICIPATION_UNCLOSED,
         "Code scanning ended without completing anticipating statement");
 
 
     // Checks for any unclosed groups
     if(stack.length>2) {
-        throwException(ExceptionType.GROUP_UNCLOSED, 
+        prethrowException(ExceptionType.GROUP_UNCLOSED, 
         `There are ${stack.length-2} unclosed groups at the end of the file`);
     }
 

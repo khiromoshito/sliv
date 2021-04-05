@@ -527,7 +527,10 @@ function interpret(source, path) {
 
         throw "";
     };
-    startExecution(lex2(lex1(source)));
+
+    let lexed = lex2(lex1(source));
+    console.log(lexed);
+    startExecution(lexed);
 }
 
 // exports = {

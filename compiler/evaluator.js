@@ -49,14 +49,23 @@ function startExecution(root) {
         return [...addresses, "unnamed-values"].join(path_separator);
     }
 
-    let evaluateValue = function(valuecontext = new Context(), address = "root", deep = true) {
+    let evaluateValue = function(valuecontext, address = "root", deep = true) {
 
 
+
+        if(valuecontext===undefined) return nullCrumb();
+        //if(valuecontext?.value==null) console.log(valuecontext);
 
         // If valuecontext is already a crumb, return it instantly
 
-        if(valuecontext.type.isOf(ContextType.CRUMB))
+        try {
+            if(valuecontext.type.isOf(ContextType.CRUMB))
             return valuecontext;
+        } catch(e) {
+            console.log(valuecontext);
+            throw "";
+        }
+        
         
 
         // Or if it is a raw scope, returned a crumb from it

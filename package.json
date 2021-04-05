@@ -1,6 +1,6 @@
 {
-  "name": "sliv-test-1",
-  "version": "0.1.0",
+  "name": "sliv-test-2",
+  "version": "0.1.1",
   "description": "",
   "bin": {
     "sliv": "index.js"
@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "colors": "^1.4.0",
+    "path": "^0.12.7",
     "yargs": "^16.2.0"
   }
 }

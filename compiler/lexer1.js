@@ -224,8 +224,8 @@ function lex1(source) {
     /** Closes the current subcontext (if any) */
     let closeSubcontext = () => {
         if(getCurrent()[0]==SubComponentType.SUBCONTEXT) {
-
-            pushGroup();
+            if(getCurrent()[1].length>0) pushGroup();
+            else stack.pop();
         } else {
             // If trying to close a non-existent subcontext
             // because of a separator (in this case, comma ",")

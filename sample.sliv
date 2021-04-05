@@ -1,29 +1,5 @@
 
+message: ""
+age: 16
 
-
-func: (name, @named age) {
-    message: "Bleh, too old"
-
-    #if age <= 10::
-        message: "Hmm, are you sure that's " + name + "'s age?"
-
-    #elseif age <= 14::
-        message: "Too young!"
-
-    #elseif age <= 17::
-        message: name + "'s age is " + age
-
-
-    #return message
-}
-
-
-
-func2: (name, @named age) {
-    #return (#if age<=10: "Too young" #else: "Just right")
-}
-
-print(func("Hanne", age: 12))
-
-
-
+print(age<10 || age=16)

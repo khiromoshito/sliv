@@ -4,11 +4,12 @@
 const yargs = require("yargs");
 const fs = require("fs");
 const colors = require("colors");
+const pathhelper = require("path");
 
-let f1 = fs.readFileSync('./compiler/init.js')+"";
-let f2 = fs.readFileSync('./compiler/lexer1.js')+"";
-let f3 = fs.readFileSync('./compiler/lexer2.js')+"";
-let f4 = fs.readFileSync('./compiler/evaluator.js')+"";
+let f1 = fs.readFileSync(pathhelper.join(__dirname + "/compiler/init.js"))+"";
+let f2 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/lexer1.js'))+"";
+let f3 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/lexer2.js'))+"";
+let f4 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/evaluator.js'))+"";
 
 eval(f1+f2+f3+f4);
 

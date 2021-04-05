@@ -41,10 +41,11 @@ function lex2(root, context_type = ContextType.ROOT) {
                     break;
                     case "elseif":
                         if(priorIfContext!==undefined) {
-                            let elseif_statement = 
-                                processIfCommandItem(subcontext[1].slice(1));
 
-                            priorIfContext.if_statements.push(elseif_statement);
+                            let processedCommand = processCommand(subcontext[1]);
+                            let elseif_statements = processedCommand.if_statements;
+
+                            priorIfContext.if_statements.push(...elseif_statements);
                         }
                     break;
                     default:
@@ -56,11 +57,10 @@ function lex2(root, context_type = ContextType.ROOT) {
                         if(subcontext[1][i][1]==="if") {
                             priorIfContext = lexed;
                         }
-
-                        isLexed = true;
                 }
 
                 
+                isLexed = true;
                 break;
 
             }
@@ -108,6 +108,22 @@ function processSetter(subcontext, equator_index) {
  *  subcomponents is an array
  */
  function processValue(subcomponents) {
+
+
+    /*
+
+        Level of Power:
+            - command/logic
+            - comparator
+
+        First, iterate for any command/logic
+            if any, conquere any needed values
+        
+        If none, proceed to locate comparators
+
+    */
+
+
     let valuecontext = new ValueContext();
 
     if(subcomponents.length>0)
@@ -118,37 +134,38 @@ function processSetter(subcontext, equator_index) {
         return processCommand(subcomponents);
     }
 
-    // Secondly, check for any logic gates (and, or)
-    // If there is any, split the subcomponents into
-    // a two-sided LogicContext
-    for(let li = 0; li<subcomponents.length; li++) {
-        if(isLogicGate(subcomponents[li])) {
+    for(let i = 0; i<subcomponents.length; i++) {
+        if(isLogicGate(subcomponents[i])) {
             
-            let left = subcomponents.slice(0, li);
-            let right = subcomponents.slice(li+1);
+            let left = subcomponents.slice(0, i);
+            let right = subcomponents.slice(i+1);
 
             // Both sides must not be empty
             if(left.length==0)
                 throw(`CompileException: Left side of logic gate '${subcomponents[li][1]}' `+
                     `is empty (both sides must contain a value), at `+
-                    `line ${subcomponents[li][2][0].line} `+
-                    `column ${subcomponents[li][2][0].column}`);
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
 
             if(right.length==0)
                 throw(`CompileException: Right side of logic gate '${subcomponents[li][1]}' `+
                     `is empty (both sides must contain a value), at `+
-                    `line ${subcomponents[li][2][0].line} `+
-                    `column ${subcomponents[li][2][0].column}`);
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
             
             valuecontext.value = new LogicContext(
                 processValue(left), 
-                getLogicType(subcomponents[li]), 
+                getLogicType(subcomponents[i]), 
                 processValue(right),
-                subcomponents[li][2][0]
+                subcomponents[i][2][0]
             );
 
             return valuecontext;
 
+        } else if(subcomponents[i][0].isOf(SubComponentType.COMMAND)) {
+            // If a command is found first before the logic,
+            // then end the scanning and proceed
+            break;
         }
     }
 
@@ -156,39 +173,39 @@ function processSetter(subcontext, equator_index) {
     // Third, check for any comparators
     // If there is any, split the subcomponents into
     // a two-sided CompareContext
-    for(let ci = 0; ci<subcomponents.length; ci++) {
-        if(isComparator(subcomponents[ci])) {
+    // for(let ci = 0; ci<subcomponents.length; ci++) {
+    //     if(isComparator(subcomponents[ci])) {
             
-            let left = subcomponents.slice(0, ci);
-            let right = subcomponents.slice(ci+1);
+    //         let left = subcomponents.slice(0, ci);
+    //         let right = subcomponents.slice(ci+1);
 
-            // Both sides must not be empty
-            if(left.length==0)
-                throw(`CompileException: Left side of comparator '${subcomponents[ci][1]}' `+
-                    `is empty (both sides must contain a value), at `+
-                    `line ${subcomponents[ci][2][0].line} `+
-                    `column ${subcomponents[ci][2][0].column}`);
+    //         // Both sides must not be empty
+    //         if(left.length==0)
+    //             throw(`CompileException: Left side of comparator '${subcomponents[ci][1]}' `+
+    //                 `is empty (both sides must contain a value), at `+
+    //                 `line ${subcomponents[ci][2][0].line} `+
+    //                 `column ${subcomponents[ci][2][0].column}`);
 
-            if(right.length==0)
-                throw(`CompileException: Right side of comparator '${subcomponents[ci][1]}' `+
-                    `is empty (both sides must contain a value), at `+
-                    `line ${subcomponents[ci][2][0].line} `+
-                    `column ${subcomponents[ci][2][0].column}`);
+    //         if(right.length==0)
+    //             throw(`CompileException: Right side of comparator '${subcomponents[ci][1]}' `+
+    //                 `is empty (both sides must contain a value), at `+
+    //                 `line ${subcomponents[ci][2][0].line} `+
+    //                 `column ${subcomponents[ci][2][0].column}`);
 
-            valuecontext.value = new CompareContext(
-                processValue(left), getCompareType(subcomponents[ci]), processValue(right)
-            );
+    //         valuecontext.value = new CompareContext(
+    //             processValue(left), getCompareType(subcomponents[ci]), processValue(right)
+    //         );
 
 
-            return valuecontext;
+    //         return valuecontext;
 
-        }
-    }
+    //     }
+    // }
 
 
     let cumulative_operations = []; // Chain of operations
     let cumulative_calls = [];      // Chain of properties and function calls
-    let current_value = null;
+    let current_value = undefined;
 
     /** Boolean which asserts if there is 
      * an anticipated named property (prior to DOT) */
@@ -211,6 +228,9 @@ function processSetter(subcontext, equator_index) {
      */
     let pushAnything = function(forceAddToOperation = false) {
         
+
+        if(current_value===undefined) return false;
+
         // What to push to operation chain (defaults to current value)
         let passable_value = current_value;
                                 
@@ -230,7 +250,7 @@ function processSetter(subcontext, equator_index) {
         if(cumulative_operations.length>0 || forceAddToOperation) {
             cumulative_operations.push(passable_value);
             return false;
-        } else return passable_value !== null;
+        } else return passable_value !== undefined;
 
     }
 
@@ -242,6 +262,8 @@ function processSetter(subcontext, equator_index) {
 
 
     let processSubcomponent = function(i, subcomponent) {
+
+        let new_i = i + 1;
         // If flag
         if(subcomponent[0].isOf(SubComponentType.FLAG)) {
             
@@ -292,6 +314,78 @@ function processSetter(subcontext, equator_index) {
             
         } else 
 
+        if(isComparator(subcomponent)) {
+            let left = subcomponents.slice(0, i);
+            let right = subcomponents.slice(i+1);
+
+            console.log(processValue(left));
+
+
+            // Both sides must not be empty
+            if(left.length==0)
+                throw(`CompileException: Left side of comparator '${subcomponents[i][1]}' `+
+                    `is empty (both sides must contain a value), at `+
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
+
+            if(right.length==0)
+                throw(`CompileException: Right side of comparator '${subcomponents[i][1]}' `+
+                    `is empty (both sides must contain a value), at `+
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
+
+
+            new_i = subcomponents.length;
+            
+            if(cachedParentheses) {
+                current_value = processGroupValue(cachedParentheses);
+                pushAnything();
+                cachedParentheses = null;
+            }
+            
+            
+            
+            current_value = new CompareContext(
+                processValue(left), getCompareType(subcomponents[i]), processValue(right)
+            );
+        } else
+
+
+        if(isLogicGate(subcomponent)) {
+            let left = subcomponents.slice(0, i);
+            let right = subcomponents.slice(i+1);
+
+            console.log({left, right});
+
+            // Both sides must not be empty
+            if(left.length==0)
+                throw(`CompileException: Left side of logic gate '${subcomponents[i][1]}' `+
+                    `is empty (both sides must contain a value), at `+
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
+
+            if(right.length==0)
+                throw(`CompileException: Right side of logic gate '${subcomponents[i][1]}' `+
+                    `is empty (both sides must contain a value), at `+
+                    `line ${subcomponents[i][2][0].line} `+
+                    `column ${subcomponents[i][2][0].column}`);
+            
+            new_i = subcomponents.length;
+
+            if(cachedParentheses) {
+                current_value = processGroupValue(cachedParentheses);
+                pushAnything();
+                cachedParentheses = null;
+            }
+
+            current_value = new LogicContext(
+                processValue(left), 
+                getLogicType(subcomponents[i]), 
+                processValue(right),
+                subcomponents[i][2][0]
+            );
+        } else 
+
 
         // If neither of flags, type, or command
         {
@@ -315,7 +409,7 @@ function processSetter(subcontext, equator_index) {
                     `line ${subcomponent[2][0].line} `+
                     `column ${subcomponent[2][0].column}`);
             } else {
-                if(current_value===null) {
+                if(current_value===undefined) {
 
                     // If current value is null and is preceded by parentheses,
                     // then it can only be a function,
@@ -362,7 +456,7 @@ function processSetter(subcontext, equator_index) {
     
                             current_value = processGroupValue(cachedParentheses);
                             cachedParentheses = null;
-                            processSubcomponent(i, subcomponent);
+                            new_i = processSubcomponent(i, subcomponent);
     
                         }
                     } else {
@@ -394,7 +488,7 @@ function processSetter(subcontext, equator_index) {
                         cumulative_operations.push(formOperationSymbol(subcomponent));
     
                         // Reset current value
-                        current_value = null;
+                        current_value = undefined;
                     } else 
                     
                     // If GROUP_PARENTHESES, then treat as function call 
@@ -433,17 +527,25 @@ function processSetter(subcontext, equator_index) {
                 }
             }
         }
+
+        return new_i;
     }
 
 
 
     // ITERATOR 
 
-    for(let i = 0; i<subcomponents.length && !isDone; i++) {
+    for(let i = 0; i<subcomponents.length && !isDone;) {
         
         let subcomponent = subcomponents[i];
 
-        processSubcomponent(i, subcomponent);
+        i = processSubcomponent(i, subcomponent);
+    }
+
+
+    if(current_value===null) {
+        console.log(current_value);
+        console.log("OOOOPSSS");
     }
 
 
@@ -463,7 +565,7 @@ function processSetter(subcontext, equator_index) {
         
         // If current_value is null, 
         // means cached parentheses is just another value
-        if(current_value===null) 
+        if(current_value===undefined) 
             current_value = processGroupValue(cachedParentheses);
         else 
         
@@ -493,7 +595,7 @@ function processSetter(subcontext, equator_index) {
 
         // Only proceed if current_value is not null
         // If current value is null, means an operation symbol is dangling
-        if(current_value!==null) {
+        if(current_value!==undefined) {
             pushToOperation();
             return new OperationContext(cumulative_operations);
         } else throw(`CompileException: Statement ended with operation symbol at `+
@@ -507,7 +609,7 @@ function processSetter(subcontext, equator_index) {
     if(cumulative_calls.length>0) {
 
         // It is expected that the current value is not empty
-        if(current_value!==null) { 
+        if(current_value!==undefined) { 
             let callcontext = new CallContext(current_value, cumulative_calls);
             callcontext.start = cumulative_calls[0].start;
             callcontext.end = cumulative_calls[cumulative_calls.length-1].start;
@@ -522,13 +624,18 @@ function processSetter(subcontext, equator_index) {
     // If neither the two chains are active, and current value is not null, 
     // set it as the passable value
     {
-        if(current_value!==null) return current_value;
+        if(current_value!==undefined) {
+            return current_value;
+        }
     }
 
 
     // Finally, set the valuecontext's value to the passable value
     valuecontext.value = passable_value;
 
+    if(valuecontext===undefined || valuecontext.value === undefined) {
+        console.log("OYY");
+    }
 
     return valuecontext;
 
@@ -1002,54 +1109,47 @@ function processCommand(command_array, position = 0) {
 
     let args = command_array.slice(1);
     
-    switch(command_name) {
-        case "return":
-            return new CommandContext(
-                "return", processValue(args), 
-                command_subcomp[2][0]);
-        case "ret":
-            return new CommandContext(
-                "return", processValue(args), 
-                command_subcomp[2][0]);
-        case "if":
+    if(["return", "ret"].includes(command_name)) {
+        return new CommandContext(
+            "return", processValue(args), 
+            command_subcomp[2][0]);
+    } else if(["if", "elseif", "else"].includes(command_name)) {
+        // First, locate any else if statements
+        let last_elseif_index = 0;
+        let if_commands = [];
+        let else_command = null;
 
-            // First, locate any else if statements
-            let last_elseif_index = 0;
-            let if_commands = [];
-            let else_command = null;
-
-            for(let i=0; i<args.length; i++) {
-                let subcomponent = args[i];
-                if(subcomponent[0].isOf(SubComponentType.COMMAND)) {
-                    if(subcomponent[1]==="elseif") {
-                        if(else_command===null) {
-                            if_commands.push(args.slice(last_elseif_index, i));
-                            last_elseif_index = i+1;
-                        } else throw(`CompileException: #elseif commands cannot be `+
-                            `declared after a concluding #else command `+
-                            `(make sure to place #else as last), at ` +
-                            `line ${subcomponent[2][0].line} `+
-                            `column ${subcomponent[2][0].column}`);
-                    } else if(subcomponent[1]==="else") {
+        for(let i=0; i<args.length; i++) {
+            let subcomponent = args[i];
+            if(subcomponent[0].isOf(SubComponentType.COMMAND)) {
+                if(subcomponent[1]==="elseif") {
+                    if(else_command===null) {
                         if_commands.push(args.slice(last_elseif_index, i));
-                        else_command = args.slice(i+1);
-                        last_elseif_index = args.length;
-                    }
+                        last_elseif_index = i+1;
+                    } else throw(`CompileException: #elseif commands cannot be `+
+                        `declared after a concluding #else command `+
+                        `(make sure to place #else as last), at ` +
+                        `line ${subcomponent[2][0].line} `+
+                        `column ${subcomponent[2][0].column}`);
+                } else if(subcomponent[1]==="else") {
+                    if_commands.push(args.slice(last_elseif_index, i));
+                    else_command = args.slice(i+1);
+                    last_elseif_index = args.length;
                 }
             }
+        }
 
-            if(last_elseif_index<args.length)
-                if_commands.push(args.slice(last_elseif_index));
+        if(last_elseif_index<args.length)
+            if_commands.push(args.slice(last_elseif_index));
 
-            return new IfCommandContext(
-                if_commands.map(if_command=>processIfCommandItem(if_command)),
-                else_command ? processIfCommandItem(else_command) : undefined,
-                command_subcomp[2][0]
-            );
-
-        break;
-
+        return new IfCommandContext(
+            if_commands.map(if_command=>processIfCommandItem(if_command)),
+            else_command ? processIfCommandItem(else_command) : undefined,
+            command_subcomp[2][0]
+        );
     }
+
+        
 
 
     // for(let arg of command_array.slice(1))

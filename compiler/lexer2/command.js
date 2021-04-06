@@ -7,7 +7,7 @@ function processCommand(command_array, position = 0) {
 
 
     if(!COMMANDS.includes(command_name)) 
-        throwException(`CompileException: Unknown command '#${flag_name}'`, flag_subcomponent[2][0]);
+        throwException(`CompileException: Unknown command '#${command_name}'`, command_subcomp[2][0]);
 
     // Commands must have at least one argument (two items for command_array)
     if(command_array.length<=1) 
@@ -54,6 +54,113 @@ function processCommand(command_array, position = 0) {
             else_command ? processIfCommandItem(else_command) : undefined,
             command_subcomp[2][0]
         );
+    } else if(["for", "iterate", "iter"].includes(command_name)) {
+
+        
+        let parameters = [];
+    
+        let isAnticipating = false;
+
+        let param = new ParameterItem();
+
+        for(let i = 0; i<args.length; i++) {
+
+            let subcomponent = args[i];
+
+            // If TYPE (GROUP_BRACKET)
+            if(subcomponent[0].isOf(SubComponentType.GROUP_BRACKET)) {
+
+                // Only set type if not yet set
+                if(param.parameter_type === null)
+                    param.parameter_type = processType(subcomponent);
+                else throwException(`CompileException: Unexpected type `+
+                    `(the type has already been set)`, subcomponent[2][0]);
+
+            } else 
+
+            //If VARIABLE
+            if(isVariable(subcomponent)) {
+
+                if(isAnticipating || parameters.length==0) {
+                    param.variable_name = subcomponent[1];
+                    param.start = subcomponent[2][0];
+                    parameters.push(param);
+
+                    param = new ParameterItem();
+                    isAnticipating = false;
+                } else throwException(
+                    `CompilException: Unexpected variable '${subcomponent[1]}'`,
+                    subcomponent[2][0]);
+                
+                
+
+            } else 
+
+            if(!isAnticipating) {
+
+                if(subcomponent[0].isOf(SymbolType.GREATERTHAN2)) {
+                
+                    if(parameters.length==0) throwException(
+                        `CompilException: Unexpected '>>' without defining a preceding variable`,
+                        subcomponent[2][0]);
+    
+                    
+                    isAnticipating = true;
+                } else
+    
+                if(subcomponent[0].isOf(SymbolType.COLON2)) {
+    
+                    let positions = [
+                        args[i+1][2][0],
+                        args[args.length-1][2][1]
+                    ];
+    
+                    let action = lex2([SubComponentType.SCOPE, 
+                        [[SubComponentType.SUBCONTEXT, args.slice(i+1), positions]], 
+                        positions]);
+
+
+                    if(parameters.length==0) throwException(
+                        `CompileException: Loop command provided action '::' but no parameters found`,
+                        subcomponent[2][0]
+                    );
+    
+                    return new IterationContext(parameters, action, positions[0]);
+    
+                } else 
+
+                if(subcomponent[0].isOf(SubComponentType.GROUP_CURLY)) {
+                    
+                    // If current scope is not last item in args, throw exception
+                    if(i+1!=args.length) throwException(
+                        `CompileException: Unknown statement after scope { }`,
+                        args[i+1][2][0]);
+
+                    if(parameters.length==0) throwException(
+                        `CompileException: Loop command provided action '::' but no parameters found`,
+                        subcomponent[2][0]
+                    );
+
+                    let action = lex2(subcomponent);
+
+                    return new IterationContext(parameters, action, subcomponent[2][0]);
+
+                } else
+                
+                throwException(
+                    `CompilException: Unexpected statement`,
+                    subcomponent[2][0]);
+
+
+            } else throwException(
+                `CompileException: Unexpected statement after '>>'`,
+                subcomponent[2][0]);
+
+            
+        }
+
+        throwException(`CompileException: Loop command ended without action '{ }' or '::'`,
+            args[args.length-1][2][0]);
     }
 
         

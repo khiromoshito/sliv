@@ -121,7 +121,8 @@ var FLAGS = {
  * [isFirst:boolean, action:function]
  */
 var COMMANDS = [
-    "return", "ret", "if", "else", "elseif", "while", "for", "switch", "repeat", "generate"
+    "return", "ret", "if", "else", "elseif", "while", "for", "switch", "repeat", "generate",
+    "iter", "iterate"
 ];
 
 

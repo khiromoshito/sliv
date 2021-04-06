@@ -22,8 +22,44 @@ function evaluateCallChain(callcontext = new CallContext(), address = "root") {
                         currentCrumb.value, scope_address, args);
                 }
             break;
+            case CallType.ENTRY:
+                //console.log("Calling a property...");
+
+                if(currentCrumb.type.isOf(ContextType.SCOPE_CRUMB)) {
+                    currentCrumb = findScopeEntry(currentCrumb.value, 
+                        extractCrumb(evaluateValue(call.value)));
+                } else {
+                    throwException(`ScopeException: Trying to call property/entry '${currentCrumb.value}'`+
+                        `of a non-scope/list/map object`, callcontext.start);
+                }
+                
+                
+                // let call_address = getAddress(address, )
+                // let entry_value = variables[getAddress(address, 
+                //     getDirectValueLabel(call.value))]
+            break;
         }
     }
 
     return currentCrumb;
 };
+
+
+function findScopeEntry(scopecontext = new ScopeContext(), key) {
+    
+    let index = 0;
+
+    for(let item of scopecontext.contents) {
+        if(item.type.isOf(ContextType.SETTER)) {
+            for(let feed of item.feeds) {
+                //console.log(feed.value + " " + key);
+                if(feed.value==key) return evaluateValue(item.feed_value);
+            }
+        } else {
+            if(key===index) return evaluateValue(item);
+            index++;
+        }
+    }
+    
+    return nullCrumb();
+}

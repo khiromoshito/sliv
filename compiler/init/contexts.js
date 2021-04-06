@@ -10,13 +10,14 @@ var ContextType = {
     SCOPE_CRUMB: "context.crumb.scope",
     PATH_CRUMB: "context.crumb.path",
     RETURN_CRUMB: "context.crumb.return",
+    ENTRY_CRUMB: "context.crumb.return",
     
     TYPE: "context.type",                   // [String]
     FLAG: "context.flag",                   // @instance
     COMMAND: "context.command",             // #return "Hello world"
 
     IF_COMMAND: "context.command.ifelse",
-    FOR_COMMAND: "context.command.for",
+    ITER_COMMAND: "context.command.for",
     WHILE_COMMAND: "context.command.while",
     SWITCH_COMMAND: "context.command.switch",
 
@@ -89,6 +90,23 @@ class IfCommandContext extends CommandContext {
     }
 }
 
+class IterationContext extends CommandContext {
+    constructor(parameters, action, start) {
+        super("for", [], start, ContextType.ITER_COMMAND);
+        
+        this.action = action;
+        this.parameters = parameters;
+    }
+}
+
+// class IterItemContext {
+//     constructor() {
+//         this.key;
+//         this.value;
+//     }
+// }
+
+
 
 class IfCommandItem {
     constructor(condition, content, isAction, start) {
@@ -104,6 +122,7 @@ class IfCommandItem {
         this.start = start;
     }
 }
+
 
 
 

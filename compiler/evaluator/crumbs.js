@@ -35,6 +35,24 @@ class ReturnCrumb extends Crumb {
 
 
 
+
+/** EntryCrumbs are crumbs that hold raw ValueContext,
+ *  and they are created as accessible variables
+ *  coming from unspecified scopes
+ * 
+ *  In case with lists and maps, instead of entry crumbs,
+ *  values are preevaluated
+ */
+
+class EntryCrumb extends Crumb {
+    constructor(context, address) {
+        super([], context, address, false);
+        this.type = ContextType.ENTRY_CRUMB;
+    }
+}
+
+
+
 function nullCrumb(address) {
     return new Crumb([], null, address);
 }

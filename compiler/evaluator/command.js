@@ -43,6 +43,48 @@ function executeCommand(commandcontext = new CommandContext(), address = "root")
 
 
         break;
+        case "for":
+            //console.log(commandcontext);
+            let params = commandcontext.parameters;
+
+            let return_val = nullCrumb();
+
+            let iterate = function(action = ScopeCrumb(), depth = 1, position, iteradress = "") {
+                
+
+                
+                // If still under loop
+                if(depth<params.length) {
+                    if(action.type.isOf(ContextType.SCOPE_CRUMB)) {
+                        let item_name = params[depth].variable_name;
+                        
+
+                        for(let i=0; i<action.value.contents.length; i++) {
+                            let item = action.value.contents[i];
+                            setVariable(getAddress(address, item_name), action.value.contents[i]);
+                            iterate(evaluateValue(item), depth+1, position);
+                        }
+
+                    } else throwException(`IterationException: The last iteration (depth ${depth})`+
+                        ` cannot be iterated already (not a list/map/scope)`,
+                        position);
+                } else {
+                    // If at end
+                    return_val = executeScope(commandcontext.action, address, [], true);
+
+                }
+                
+                
+            };
+
+            let base_value = extractVariable(params[0].variable_name, address, params[0].start);
+            
+            
+            iterate(base_value, 1, params[0].start);
+
+
+            return return_val;
+        break;
         
     }
 

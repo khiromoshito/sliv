@@ -1,4 +1,6 @@
 
+
+
 function evaluateValue(valuecontext, address = "root", deep = true) {
 
 
@@ -14,7 +16,7 @@ function evaluateValue(valuecontext, address = "root", deep = true) {
     
 
     // Or if it is a raw scope, returned a crumb from it
-    if(valuecontext.type.isOf(ContextType.SCOPE))
+    if(valuecontext.type.isOf(ContextType.SCOPE)) 
         return new ScopeCrumb(valuecontext, address);
 
     // Or if it is a command

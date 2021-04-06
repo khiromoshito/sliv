@@ -42,7 +42,7 @@ let setVariable = function(address, value) {
 }
 
 
-let getDirectValueLabel = function(directvalue = new DirectValue()) {
+let getDirectValueLabel = function(directvalue) {
     if(directvalue.value_type.isOf(DirectValueType.VARIABLE))
         return directvalue.value;
     else return directvalue.type + type_separator + directvalue.value;
@@ -94,6 +94,7 @@ let executeScope = function(scope = new GroupContext(),
 function startExecution(root) {
 
     executeScope(root);
+    //console.log(variables);
 
     //console.log({variables});
 }
@@ -113,3 +114,13 @@ function hasType(types = [new TypeItem()], typename = "") {
     return false;
 }
 
+function hasEitherTypes(types = [new TypeItem()], typenames = []) {
+    for(let typeitem of types) {
+        let typeitem_name = typeitem.name;
+
+        for(let typename of typenames)
+            if(typeitem_name==typename) return true;
+    }
+
+    return false;
+}

@@ -6,12 +6,33 @@ const fs = require("fs");
 const colors = require("colors");
 const pathhelper = require("path");
 
-let f1 = fs.readFileSync(pathhelper.join(__dirname + "/compiler/init.js"))+"";
-let f2 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/lexer1.js'))+"";
-let f3 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/lexer2.js'))+"";
-let f4 = fs.readFileSync(pathhelper.join(__dirname + '/compiler/evaluator.js'))+"";
 
-eval(f1+f2+f3+f4);
+let importables = {
+    init: ["const", "contexts", "init"],
+
+    lexer1: ["lex1"],
+
+    lexer2: ["attrs", "command", "direct", 
+        "flag", "func", "group", "lex2", 
+        "setter", "type", "value"],
+
+    evaluator: ["call", "command", "compare", 
+        "crumbs", "direct", "eval", 
+        "logic", "native", "operation", 
+        "params", "value", "setter"]
+};
+
+
+let imported = "";
+
+let importable_dirs = Object.keys(importables);
+for(let dirname of importable_dirs) {
+    for(let bin of importables[dirname]) {
+        imported += fs.readFileSync(pathhelper.join(__dirname + `/compiler/${dirname}/${bin}.js`));
+    }
+}
+
+eval(imported);
 
 const options = yargs.option("r", {
     alias: "path",

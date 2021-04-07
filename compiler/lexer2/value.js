@@ -484,7 +484,7 @@
         // If current value is null, means an operation symbol is dangling
         if(current_value!==undefined) {
             pushToOperation();
-            return new OperationContext(cumulative_operations);
+            passable_value = new OperationContext(cumulative_operations);
         } else throw(`CompileException: Statement ended with operation symbol at `+
             `line ${last_subcomp[2][0].line} `+
             `column ${last_subcomp[2][0].column}`);
@@ -501,7 +501,7 @@
             callcontext.start = cumulative_calls[0].start;
             callcontext.end = cumulative_calls[cumulative_calls.length-1].start;
             
-            return callcontext;
+            passable_value = callcontext;
 
         } else throw(`FatalException: Call chain is active, but no root value found at `+
         `line ${cumulative_calls[0].start.line} `+
@@ -512,7 +512,7 @@
     // set it as the passable value
     {
         if(current_value!==undefined) {
-            return current_value;
+            passable_value = current_value;
         }
     }
 

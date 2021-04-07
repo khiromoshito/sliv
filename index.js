@@ -19,7 +19,7 @@ let importables = {
     evaluator: ["call", "command", "compare", 
         "crumbs", "direct", "eval", 
         "logic", "native", "operation", 
-        "params", "value", "setter"]
+        "params", "value", "setter", "instance"]
 };
 
 

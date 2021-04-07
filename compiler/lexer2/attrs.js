@@ -5,6 +5,7 @@ function processAttributes(attributes) {
 
     let type = null;
     let flags = [];
+    let last_flag_index = -1;
 
     /** Feeds are the variables and objects that pend to change value (set) */
     let feeds = [];
@@ -38,8 +39,18 @@ function processAttributes(attributes) {
     };
 
 
-    for(let attr of attributes) {
-        
+    for(let i=0; i<attributes.length; i++) {
+        let attr = attributes[i];
+
+
+
+        if(attr[0].isOf(SubComponentType.FLAG)) {
+            if(last_flag_index+1===i) {
+                flags.push(processFlag(attr));
+                last_flag_index++;
+            } else throwException(`CompileException: flags must be set before any value or variable`,
+                attr[2][0]);
+        } else
         // Check first if anticipating for property name
         if(isAnticipating) {
             // Current attribute subcontext must be variable
@@ -82,7 +93,26 @@ function processAttributes(attributes) {
             // Then update current variable
             current_variable = getDirectValue(attr);
 
-        } else 
+        } else if(attr[0].isOf(SubComponentType.GROUP_PARENTHESES)) {
+            if(current_variable!==null) {
+                // This only applies to variable direct values **
+                if(current_variable.type===ContextType.DIRECT_VALUE && 
+                    !current_variable.value_type===DirectValueType.VARIABLE)
+                    
+                    throw(`CompileException: Unexpected '(' after non-variable object at `+
+                    `line ${attr[2][0].line} `+
+                    `column ${attr[2][0].column}`);
+
+
+
+                    cumulative_calls.push(
+                        new CallItem(CallType.FUNCTION, 
+                            processArgs(attr),attr[2][0]));
+
+            } else {
+                current_variable = processGroupValue(attr);
+            }
+        } else
 
         // For other subcomponents when current_variable is not null
         if(current_variable!==null) {
@@ -112,7 +142,12 @@ function processAttributes(attributes) {
                     `line ${attr[2][0].line} `+
                     `column ${attr[2][0].column}`);
 
-            } else 
+            } else if(attr[0].isChar(CharType.AND)) {
+                pushFeed(); 
+            } 
+            
+            
+            else 
                 throw(`CompileException: Unexpected statement on left side of setter at `+
                 `line ${attr[2][0].line} `+
                 `column ${attr[2][0].column}`);

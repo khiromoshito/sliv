@@ -34,6 +34,16 @@ class ReturnCrumb extends Crumb {
 }
 
 
+class InstanceCrumb extends Crumb {
+    constructor(props = {}, scope, address) {
+        super([], scope, address);
+        this.type = ContextType.INSTANCE_CRUMB;
+
+        this.props = props;
+    }
+}
+
+
 
 
 /** EntryCrumbs are crumbs that hold raw ValueContext,

@@ -6,7 +6,6 @@ function evaluateValue(valuecontext, address = "root", deep = true) {
 
 
     if(valuecontext===undefined) return nullCrumb();
-    //if(valuecontext?.value==null) console.log(valuecontext);
 
     // If valuecontext is already a crumb, return it instantly
 
@@ -37,7 +36,9 @@ function evaluateValue(valuecontext, address = "root", deep = true) {
             return evaluateOperation(valuecontext, address);
 
         case ContextType.VALUE:
-            return evaluateValue(valuecontext.value, address, deep);
+            if(hasFlag(valuecontext.value_flags || [], "instance"))
+                return evaluateInstance(valuecontext, address);
+            else return evaluateValue(valuecontext.value, address, deep);
 
         case ContextType.COMPARE:
             return evaluateCompare(valuecontext, address);

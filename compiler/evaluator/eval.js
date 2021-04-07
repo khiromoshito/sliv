@@ -67,15 +67,20 @@ let getUnnamedAddress = function(...addresses) {
 // cannot return a value of itself with #return command. 
 // If true, any #return commands is passed on to parent scope
 // instead of returning it on itself
-let executeScope = function(scope = new GroupContext(), 
-    address = "root", args = [], isShallow = false) {
+let executeScope = function(scopecontext = new GroupContext(), 
+    address = "root", args = [], isShallow = false, isInstance = false) {
+
+    let scope = isInstance ? scopecontext.value : scopecontext;
 
     if(scope.parameters !== undefined && scope.parameters.length > 0) 
         evaluateParameters(scope.parameters, args, address, scope.start);
     
     for(let context of scope.contents) {
         if(context.type==ContextType.SETTER) {
-            executeSetter(context, address);
+            if(isInstance)
+                executeSetter(context, address, true, scopecontext);
+            else
+                executeSetter(context, address);
         } else {
             let valuecrumb = evaluateValue(context, address);
 

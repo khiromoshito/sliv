@@ -11,6 +11,7 @@ var ContextType = {
     PATH_CRUMB: "context.crumb.path",
     RETURN_CRUMB: "context.crumb.return",
     ENTRY_CRUMB: "context.crumb.return",
+    INSTANCE_CRUMB: "context.crumb.instance",
     
     TYPE: "context.type",                   // [String]
     FLAG: "context.flag",                   // @instance
@@ -68,6 +69,12 @@ class FlagItem {
 function hasFlag(flags, name) {
     for(let flag of flags)
         if(flag.name===name) return true;
+    return false;
+}
+
+function hasEitherFlags(flags, names) {
+    for(let flag of flags)
+        if(names.includes(flag.name)) return true;
     return false;
 }
 
@@ -292,14 +299,14 @@ function isLogicGate(subcomponent) {
 }
 
 class SetterContext extends Context {
-    constructor() {
+    constructor(flags = [], type = null, feeds = [], value = null) {
         super(ContextType.SETTER);
 
-        this.setter_flags = [];
-        this.setter_type =  null;
-        this.feeds = [];
+        this.setter_flags = flags;
+        this.setter_type =  type;
+        this.feeds = feeds;
 
-        this.feed_value = null;
+        this.feed_value = value;
     }
 }
 

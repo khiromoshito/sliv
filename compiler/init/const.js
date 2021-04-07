@@ -111,7 +111,8 @@ var FLAGS = {
     "alias": null,
     "constructor": null,
     "model": null,
-    "named": null
+    "named": null,
+    "action": null
 };
 
 /**

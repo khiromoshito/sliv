@@ -15,3 +15,13 @@ function evaluateDirectValue(directvalue = new DirectValue(), address = "root", 
             return new Crumb([], null, address);
     }
 }
+
+
+function getDirectValueType(value) {
+    if(typeof(value)==="string") return DirectValueType.STRING;
+    if(typeof(value)==="number") return DirectValueType.NUMBER;
+    if(typeof(value)==="boolean") return DirectValueType.BOOL;
+    if(value===null || value==="null") return DirectValueType.NULL;
+
+    return "";
+}

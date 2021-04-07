@@ -13,9 +13,9 @@ function executeSetter(settercontext = new SetterContext(), address = "root", de
 
             if(instance!==undefined) {
                 instance.props[label] = value;
-            } else {
-                setVariable(feed_address, value);
             }
+                setVariable(feed_address, value);
+            
 
             
         } else 
@@ -33,9 +33,9 @@ function executeSetter(settercontext = new SetterContext(), address = "root", de
 
                 if(instance!==undefined) {
                     instance.props[label] = value;
-                } else {
-                    setVariable(feed_address, value);
                 }
+                setVariable(feed_address, value);
+                
             }
             
         } else if(feed.type.isOf(ContextType.CALL)) {

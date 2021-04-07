@@ -1,7 +1,7 @@
 
 
 
-function evaluateValue(valuecontext, address = "root", deep = true) {
+function evaluateValue(valuecontext, address = "root", deep = true, instance) {
 
 
 
@@ -27,7 +27,7 @@ function evaluateValue(valuecontext, address = "root", deep = true) {
     switch(valuecontext.type) {
 
         case ContextType.DIRECT_VALUE:
-            return evaluateDirectValue(valuecontext, address, deep);
+            return evaluateDirectValue(valuecontext, address, deep, instance);
     
         case ContextType.CALL:
             return evaluateCallChain(valuecontext, address);

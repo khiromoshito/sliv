@@ -2,7 +2,9 @@
 
 
 /** Must only return a crumb */
-let extractVariable = function(variable_name, address, position) {
+let extractVariable = function(variable_name, address, position, instance) {
+    
+    if(instance!==undefined || instance !=undefined) console.log(instance);
 
     let address_arr = address.split(path_separator);
 
@@ -82,7 +84,8 @@ let executeScope = function(scopecontext = new GroupContext(),
             else
                 executeSetter(context, address);
         } else {
-            let valuecrumb = evaluateValue(context, address);
+            let valuecrumb = evaluateValue(context, address, true, 
+                isInstance ? scopecontext : undefined);
 
             // If shallow, return whole ReturnCrumb, else just value
             if(valuecrumb.type==ContextType.RETURN_CRUMB)

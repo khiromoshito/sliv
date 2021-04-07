@@ -1,9 +1,9 @@
 
-function evaluateDirectValue(directvalue = new DirectValue(), address = "root", deep = true) {
+function evaluateDirectValue(directvalue = new DirectValue(), address = "root", deep = true, instance) {
     switch(directvalue.value_type) {
         case DirectValueType.VARIABLE:
             return deep ? 
-                extractVariable(directvalue.value, address, directvalue.start) : 
+                extractVariable(directvalue.value, address, directvalue.start, instance) : 
                 directvalue;
         case DirectValueType.STRING:
             return new Crumb([], directvalue.value, address);

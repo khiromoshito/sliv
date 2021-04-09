@@ -199,7 +199,7 @@ var CharGroups = [
     [CharType.NOT, "!"],
 
 
-    [CharType.SPACE, " "],
+    [CharType.SPACE, " \s\t"],
     [CharType.LINEBREAK, "\n"]
 ];
 

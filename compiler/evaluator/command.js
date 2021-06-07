@@ -35,7 +35,7 @@ function executeCommand(commandcontext = new CommandContext(), address = "root")
                 let else_statement = commandcontext.else_statement;
                 if(else_statement.isAction)
                     value = executeScope(else_statement.content, address, [], true);
-                else return evaluateValue(else_statement.content);
+                else return evaluateValue(else_statement.content, address);
             }
             
             if(value!==undefined && value.type.isOf(ContextType.RETURN_CRUMB))

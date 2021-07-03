@@ -1,0 +1,98 @@
+
+/* ------------- Fundamentals --------------- */
+// Setting a variable
+num: 1
+message: "Hello world"
+isGood: true
+
+
+// Creating a list
+letters: {"a", "b", "c"}
+
+/* ------------------------------------------- */
+
+
+/* ----------- Operatorions ------------ */
+
+// Arithmetic
+sum:        num1 + num2 
+difference: num1 - num2
+product:    num1 * num2
+quotient:   num1 / num2
+
+// String
+message:    "Hello" + "World"
+repeated:   "Hello world"*5     // Hello world (five times)
+
+
+// Comparators
+isEqual:    num1 = num2
+isNot:      num1 != num2
+isGreater:  num1 > num2
+isLess:     num1 < num2
+isGOE:      num1 >= num2
+isLOE:      num1 <= num2
+
+
+// Logical
+or:         exp1 || exp2
+and:        exp1 && exp2
+
+
+/* ------------------------------------------ */
+
+
+
+/* --------- If-else statements ---------- */
+
+// Regular code blocks
+#if num = 1 {
+    print("Yep, the number is 1")
+} #else {
+    print("Nope, the number is not 1")
+}
+
+// Single-liner
+#if num = 1:: print("Yep, the number is 1")
+#else:: print("Nope, the number is not 1")
+
+// Ternary (value-emitting)
+log: #if num = 1: "Yep" #else: "Nope"
+print(log)
+
+
+
+
+
+
+/* ------------ Functions ------------ */
+
+// Regular
+add: (num1, num2) {
+    #return num1 + num2
+}
+
+// Lambda
+add: (num1, num2):: num1 + num2
+
+/* ------------------------------------ */
+
+
+
+
+
+
+
+
+/* ------------ Loops ------------- */
+
+// Regular list iteration
+fruits: {"apple", "kiwi", "cherry"}
+#for fruits >> fruit {
+    print(fruit)
+}
+
+// Lambda list iteration
+#for fruits >> fruit:: print(fruit)
+
+/* -------------------------------- */

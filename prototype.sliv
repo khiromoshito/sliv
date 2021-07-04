@@ -9,6 +9,13 @@ isGood: true
 // Creating a list
 letters: {"a", "b", "c"}
 
+// Creating a map
+person: {
+    name: "John",
+    age: 27
+}
+
+
 /* ------------------------------------------- */
 
 
